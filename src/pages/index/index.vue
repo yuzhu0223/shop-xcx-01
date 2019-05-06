@@ -1,125 +1,199 @@
 <template>
-  <div @click="clickHandle">
-
-    <div class="userinfo" @click="bindViewTap">
-      <img class="userinfo-avatar" v-if="userInfo.avatarUrl" :src="userInfo.avatarUrl" background-size="cover" />
-      <img class="userinfo-avatar" src="/static/images/user.png" background-size="cover" />
-
-      <div class="userinfo-nickname">
-        <card :text="userInfo.nickName"></card>
+  <div class="index-container">
+    <!-- 顶部 -->
+    <div class="header">
+      <!-- 搜索区域 -->
+      <div class="search">
+        <input type="text" placeholder="请输入搜索商品">
+      </div>
+      <!-- 搜索结果 -->
+      <div class="result"></div>
+    </div>
+    <!-- 轮播图 -->
+    <swiper class="banner"
+      indicator-dots indicator-color="rgbaa(255,255,255,.6)" indicator-active-color="#fff" autoplay interval="2000" circular>
+      <swiper-item v-for="item in swiperList" :key="item.goods_id">
+        <navigator :url="item.navigator_url">
+          <image :src="item.image_src"></image>
+        </navigator>
+      </swiper-item>
+    </swiper>
+    <!-- 导航分类 -->
+    <div class="navs">
+      <navigator :url="item.navigator_url" v-for="(item, i) in navList" :key="i">
+        <image :src="item.image_src"></image>
+      </navigator>
+    </div>
+    <!-- 楼层 -->
+    <div class="floors">
+      <div class="floor" v-for="(item1,i) in floorList" :key="i">
+        <div class="title">
+          <image :src="item1.floor_title.image_src"></image>
+        </div>
+        <div class="qita">
+          <navigator :url="item2.navigator_url" v-for="(item2,index) in item1.product_list" :key="index">
+            <image :src="item2.image_src"></image>
+          </navigator>
+        </div>
       </div>
     </div>
-
-    <div class="usermotto">
-      <div class="user-motto">
-        <card :text="motto"></card>
-      </div>
-    </div>
-
-    <form class="form-container">
-      <input type="text" class="form-control" :value="motto" placeholder="v-model" />
-      <input type="text" class="form-control" v-model="motto" placeholder="v-model" />
-      <input type="text" class="form-control" v-model.lazy="motto" placeholder="v-model.lazy" />
-    </form>
-
-
-    <div class="all">
-        <div class="left">
-        </div>
-        <div class="right">
-        </div>
-    </div>
+    <!-- 回到顶部 -->
+    <span class="gotop" v-show="isShow" @click="goTop">顶部</span>
   </div>
 </template>
 
 <script>
-import card from '@/components/card'
-
+import request from '@/utils/request'
 export default {
   data () {
     return {
-      motto: 'Hello miniprograme',
-      userInfo: {
-        nickName: 'mpvue',
-        avatarUrl: 'http://mpvue.com/assets/logo.png'
-      }
+      swiperList: [],
+      navList: [],
+      floorList: [],
+      isShow: false
     }
   },
-
-  components: {
-    card
+  mounted() {
+    this.getSwiper()
+    this.getNavs()
+    this.getFools()
   },
-
   methods: {
-    bindViewTap () {
-      const url = '../logs/main'
-      if (mpvuePlatform === 'wx') {
-        mpvue.switchTab({ url })
-      } else {
-        mpvue.navigateTo({ url })
+    // 轮播图
+    async getSwiper () {
+      const {message,meta} = await request({
+        url:'/api/public/v1/home/swiperdata'
+      })
+      // console.log(message,meta)
+      if (meta.status === 200) {
+        this.swiperList = message
       }
     },
-    clickHandle (ev) {
-      console.log('clickHandle:', ev)
-      // throw {message: 'custom test'}
+    // 导航分类
+    async getNavs () {
+      const {message,meta} = await request({
+        url:'/api/public/v1/home/catitems'
+      })
+      // console.log(message,meta)
+      if (meta.status === 200) {
+        this.navList = message
+      }
+    },
+    // 楼层
+    async getFools () {
+      const {message,meta} = await request({
+        url:'/api/public/v1/home/floordata'
+      })
+      // console.log(message,meta)
+      if (meta.status === 200) {
+        this.floorList = message
+      }
+    },
+
+     // 回到顶部:调用api--将页面滚动到目标位置
+    goTop () {
+      mpvue.pageScrollTo ({
+        scrollTop: 0
+      })
     }
   },
 
-  created () {
-    // let app = getApp()
+  // 下拉刷新
+  onPullDownRefresh () {
+    this.getSwiper()
+    this.getNavs()
+    this.getFools()
+    // 请求完成，停止刷新
+    wx.stopPullDownRefresh()
+  },
+
+  // 上拉触底
+  onReachBottom () {
+    console.log('上拉触底')
+  },
+
+  // 监听用户滑动页面事件
+  onPageScroll (e) {
+    // console.log(e)
+    this.isShow = e.scrollTop >= 200
   }
 }
 </script>
 
-<style scoped>
-.userinfo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+<style scoped lang="less">
+  .index-container{
+    // 顶部
+    .header{
+      background-color: #ff2d4a;
+      padding: 20rpx 16rpx;
+      width: 100%;
+      box-sizing: border-box;
+      input{
+        width: 100%;
+        height: 60rpx;
+        background-color: #fff;
+        font-size: 24rpx;
+        padding-left: 15rpx;
+        box-sizing: border-box;
+        border-radius: 10rpx;
+      }
+    }
+    // 轮播图
+    .banner{
+      width: 750rpx;
+      height: 340rpx;
+      navigator{
+        width: 100%;
+        height: 100%;
+      }
+    }
+    // 导航分类
+    .navs{
+      display: flex;
+      justify-content: space-between;
+      padding: 30rpx 40rpx;
+      navigator{
+        width: 128rpx;
+        height: 140rpx;
+      }
+    }
+    // 楼层
+    .floors{
+      .floor{
+        padding-top: 30rpx;
+        background-color: #f4f4f4;
+        padding-bottom: 20rpx;
+        .title{
+          width: 100%;
+          height: 60rpx;
+        }
+        .qita{
+          overflow: hidden;
+          navigator{
+            height: 188rpx;
+            width: 30%;
+            float: left;
+            padding: 16rpx 0 0 18rpx;
+          }
+          navigator:first-child{
+            height: 390rpx;
+          }
+        }
+      }
+    }
+    .gotop{
+      width: 88rpx;
+      height: 88rpx;
+      border-radius: 50%;
+      background-color: #fff;
+      color: #666666;
+      font-size: 25rpx;
+      text-align: center;
+      line-height: 88rpx;
+      position: fixed;
+      right: 10rpx;
+      bottom: 20rpx;
+    }
 
-.userinfo-avatar {
-  width: 128rpx;
-  height: 128rpx;
-  margin: 20rpx;
-  border-radius: 50%;
-}
-
-.userinfo-nickname {
-  color: #aaa;
-}
-
-.usermotto {
-  margin-top: 150px;
-}
-
-.form-control {
-  display: block;
-  padding: 0 12px;
-  margin-bottom: 5px;
-  border: 1px solid #ccc;
-}
-.all{
-  width:7.5rem;
-  height:1rem;
-  background-color:blue;
-}
-.all:after{
-  display:block;
-  content:'';
-  clear:both;
-}
-.left{
-  float:left;
-  width:3rem;
-  height:1rem;
-  background-color:red;
-}
-
-.right{
-  float:left;
-  width:4.5rem;
-  height:1rem;
-  background-color:green;
-}
+  }
 </style>
