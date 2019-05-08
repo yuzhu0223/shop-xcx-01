@@ -1,14 +1,7 @@
 <template>
   <div class="index-container">
-    <!-- 顶部 -->
-    <div class="header">
-      <!-- 搜索区域 -->
-      <div class="search">
-        <input type="text" placeholder="请输入搜索商品">
-      </div>
-      <!-- 搜索结果 -->
-      <div class="result"></div>
-    </div>
+    <!-- 顶部搜索 -->
+    <search></search>
     <!-- 轮播图 -->
     <swiper class="banner"
       indicator-dots indicator-color="rgbaa(255,255,255,.6)" indicator-active-color="#fff" autoplay interval="2000" circular>
@@ -44,7 +37,11 @@
 
 <script>
 import request from '@/utils/request'
+import search from '@/components/search'
 export default {
+  components: {
+    search
+  },
   data () {
     return {
       swiperList: [],
